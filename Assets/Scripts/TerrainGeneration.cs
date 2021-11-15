@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[ExecuteInEditMode]
 public class TerrainGeneration : MonoBehaviour
 {
     public Utils.NoiseType noiseType;
@@ -11,6 +12,11 @@ public class TerrainGeneration : MonoBehaviour
 
     public int widthOffset = 0;
     public int heightOffset = 0;
+
+    [Min(0.01f)]
+    public float noiseScale = 1;
+    [Min(0.01f)]
+    public float verticalScale = 1;
 
     public GameObject texturePlane;
 
@@ -23,7 +29,7 @@ public class TerrainGeneration : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        Generate();
     }
 
     void Generate()
@@ -32,10 +38,16 @@ public class TerrainGeneration : MonoBehaviour
         MeshCollider meshCollider = texturePlane.GetComponent<MeshCollider>();
         MeshRenderer meshRenderer = texturePlane.GetComponent<MeshRenderer>();
 
-        meshFilter.mesh = MeshGeneration.Generate(width, height);
-        meshCollider.sharedMesh = meshFilter.mesh;
+        NoiseMapInfo mapInfo = new NoiseMapInfo(width, height, widthOffset, heightOffset, noiseScale);
 
-        meshRenderer.sharedMaterial.mainTexture = TextureGeneration.Generate(width, height, widthOffset, heightOffset, noiseType);
+        meshFilter.sharedMesh = MeshGeneration.GeneratePlane(width, height);
+        meshCollider.sharedMesh = meshFilter.sharedMesh;
+
+        float[,] noiseMap = NoiseGeneration.Generate(mapInfo, noiseType);
+        meshRenderer.sharedMaterial.mainTexture = TextureGeneration.Generate(mapInfo, noiseMap, noiseType);
+
+        meshFilter.sharedMesh = MeshGeneration.ApplyHeightmap(meshFilter.sharedMesh, noiseMap, verticalScale);
+        meshCollider.sharedMesh = meshFilter.sharedMesh;
     }
 
     

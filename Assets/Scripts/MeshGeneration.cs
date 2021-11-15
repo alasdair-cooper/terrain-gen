@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class MeshGeneration
 {
-    static public Mesh Generate(int width, int height)
+    static public Mesh GeneratePlane(int width, int height)
     {
         Mesh mesh = new Mesh();
 
@@ -46,6 +46,28 @@ public class MeshGeneration
         mesh.triangles = triangles;
         mesh.uv = uvs;
 
+        return mesh;
+    }
+
+    static public Mesh ApplyHeightmap(Mesh mesh, float[,] noiseMap, float scale)
+    {
+        int height = noiseMap.GetLength(1);
+        int width = noiseMap.GetLength(0);
+
+        Vector3[] vertices = new Vector3[width * height];
+
+        int vertexIndex = 0;
+
+        for (int z = 0; z < height; z++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                vertices[vertexIndex] = new Vector3(x, noiseMap[x, z] * scale, z);
+                vertexIndex++;
+            }
+        }
+
+        mesh.vertices = vertices;
         return mesh;
     }
 }

@@ -7,7 +7,9 @@ public class TerrainGeneration : MonoBehaviour
 {
     public Utils.NoiseType noiseType;
 
+    [Min(2)]
     public int width = 10;
+    [Min(2)]
     public int height = 10;
 
     public int widthOffset = 0;
@@ -18,7 +20,7 @@ public class TerrainGeneration : MonoBehaviour
     [Min(0.01f)]
     public float verticalScale = 1;
 
-    [Min(1)]
+    [Range(1, 5)]
     public int octaves = 5;
 
     [Range(0, 100)]
@@ -55,7 +57,7 @@ public class TerrainGeneration : MonoBehaviour
         meshRenderer.sharedMaterial.mainTexture = TextureGeneration.Generate(mapInfo, noiseMap, noiseType);
 
         meshFilter.sharedMesh = MeshGeneration.ApplyHeightmap(meshFilter.sharedMesh, noiseMap, verticalScale);
-        //meshCollider.sharedMesh = meshFilter.sharedMesh;
+        meshCollider.sharedMesh = meshFilter.sharedMesh;
     }
 
     

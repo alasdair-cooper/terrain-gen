@@ -85,8 +85,6 @@ public class NoiseGeneration
                 {
                     minNoise = noiseHeight;
                 }
-
-                //noiseMap[x, z] = Mathf.InverseLerp(minNoise, maxNoise, noiseHeight);
             }
         }
 

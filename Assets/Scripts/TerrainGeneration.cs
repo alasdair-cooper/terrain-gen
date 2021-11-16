@@ -6,7 +6,7 @@ using UnityEngine;
 public class TerrainGeneration : MonoBehaviour
 {
     public Utils.NoiseType noiseType;
-
+    
     [Min(2)]
     public int width = 10;
     [Min(2)]
@@ -48,14 +48,18 @@ public class TerrainGeneration : MonoBehaviour
         MeshCollider meshCollider = texturePlane.GetComponent<MeshCollider>();
         MeshRenderer meshRenderer = texturePlane.GetComponent<MeshRenderer>();
 
+        // Create an object to store all the info about the heightmap and the noise generation
         NoiseMapInfo mapInfo = new NoiseMapInfo(width, height, widthOffset, heightOffset, noiseScale, octaves, lacunarity, persistence);
 
+        // Generate a flat plane
         meshFilter.sharedMesh = MeshGeneration.GeneratePlane(width, height);
         meshCollider.sharedMesh = meshFilter.sharedMesh;
 
+        // Create the noise map (heightmap)
         float[,] noiseMap = NoiseGeneration.Generate(mapInfo, noiseType);
-        meshRenderer.sharedMaterial.mainTexture = TextureGeneration.Generate(mapInfo, noiseMap, noiseType);
+        meshRenderer.sharedMaterial.mainTexture = TextureGeneration.Generate(mapInfo, noiseMap);
 
+        // Apply the noise map to the flat plane to produce a distorted mesh 
         meshFilter.sharedMesh = MeshGeneration.ApplyHeightmap(meshFilter.sharedMesh, noiseMap, verticalScale);
         meshCollider.sharedMesh = meshFilter.sharedMesh;
     }

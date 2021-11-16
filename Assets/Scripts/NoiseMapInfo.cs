@@ -7,48 +7,20 @@ public class NoiseMapInfo
     private float _widthOffset;
     private float _heightOffset;
 
-    private float _noiseScale;
-    private float _verticalScale;
-
     public int Width { get; set; }
     public int Height { get; set; }
 
     public float WidthOffset { get => _widthOffset; set => _widthOffset = value + 0.1f; }
     public float HeightOffset { get => _heightOffset; set => _heightOffset = value + 0.1f; }
 
-    public float NoiseScale 
-    { 
-        get => _noiseScale; 
-        set 
-        { 
-            if (value <= 0)
-            {
-                _noiseScale = 0.01f;
-            }
-            else
-            {
-                _noiseScale = value;
-            }
-        } 
-    }
+    public float NoiseScale { get; set; }
+    public float VerticalScale { get; set; }
 
-    public float VerticalScale
-    {
-        get => _verticalScale;
-        set
-        {
-            if (value <= 0)
-            {
-                _verticalScale = 0.01f;
-            }
-            else
-            {
-                _verticalScale = value;
-            }
-        }
-    }
+    public int Octaves { get; set; }
+    public float Lacunarity { get; set; }
+    public float Persistence { get; set; }
 
-    public NoiseMapInfo(int width, int height, float widthOffset, float heightOffset, float noiseScale)
+    public NoiseMapInfo(int width, int height, float widthOffset, float heightOffset, float noiseScale, int octaves, float lacunarity, float persistence)
     {
         Width = width;
         Height = height;
@@ -57,5 +29,10 @@ public class NoiseMapInfo
         HeightOffset = heightOffset;
 
         NoiseScale = noiseScale;
+        
+        Octaves = octaves;
+
+        Lacunarity = lacunarity;
+        Persistence = persistence;
     }
 }

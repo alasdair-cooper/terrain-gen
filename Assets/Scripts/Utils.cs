@@ -10,5 +10,11 @@ public class Utils
         simplex,
         displacement
     }
+
+    public enum RenderMode
+    {
+        CPU,
+        GPU
+    }
 }
 

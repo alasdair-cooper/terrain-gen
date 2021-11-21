@@ -20,7 +20,7 @@ public class NoiseMapInfo
     public float Lacunarity { get; set; }
     public float Persistence { get; set; }
 
-    public NoiseMapInfo(int width, int height, float widthOffset, float heightOffset, float noiseScale, int octaves, float lacunarity, float persistence)
+    public NoiseMapInfo(int width, int height, float widthOffset, float heightOffset, float noiseScale, float verticalScale, int octaves, float lacunarity, float persistence)
     {
         Width = width;
         Height = height;
@@ -29,6 +29,7 @@ public class NoiseMapInfo
         HeightOffset = heightOffset;
 
         NoiseScale = noiseScale;
+        VerticalScale = verticalScale;
         
         Octaves = octaves;
 

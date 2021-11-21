@@ -5,6 +5,7 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class TerrainGeneration : MonoBehaviour
 {
+    public Utils.RenderMode renderMode;
     public Utils.NoiseType noiseType;
     
     [Min(2)]
@@ -28,7 +29,7 @@ public class TerrainGeneration : MonoBehaviour
     [Range(0, 1)]
     public float persistence;
     
-    public GameObject texturePlane;
+    public GameObject terrainObject;
 
     // Start is called before the first frame update
     void Start()
@@ -40,28 +41,45 @@ public class TerrainGeneration : MonoBehaviour
     void Update()
     {
         Generate();
+
+        MeshRenderer meshRenderer = terrainObject.GetComponent<MeshRenderer>();
+        Material material = meshRenderer.material;
+
+        // Put the properties in a noise map info object first as it modifies them in important ways
+        NoiseMapInfo mapInfo = new NoiseMapInfo(width, height, widthOffset, heightOffset, noiseScale, verticalScale, octaves, lacunarity, persistence);
+
+        material.SetFloat("_WidthOffset", mapInfo.WidthOffset);
+        material.SetFloat("_HeightOffset", mapInfo.HeightOffset);
+        material.SetFloat("_NoiseScale", mapInfo.NoiseScale);
+        material.SetFloat("_VerticalScale", mapInfo.VerticalScale);
+        material.SetFloat("_Octaves", mapInfo.Octaves);
+        material.SetFloat("_Lacunarity", mapInfo.Lacunarity);
+        material.SetFloat("_Persistence", mapInfo.Persistence);
     }
 
     void Generate()
     {
-        MeshFilter meshFilter = texturePlane.GetComponent<MeshFilter>();
-        MeshCollider meshCollider = texturePlane.GetComponent<MeshCollider>();
-        MeshRenderer meshRenderer = texturePlane.GetComponent<MeshRenderer>();
+        MeshFilter meshFilter = terrainObject.GetComponent<MeshFilter>();
+        //MeshCollider meshCollider = terrainObject.GetComponent<MeshCollider>();
+        MeshRenderer meshRenderer = terrainObject.GetComponent<MeshRenderer>();
 
         // Create an object to store all the info about the heightmap and the noise generation
-        NoiseMapInfo mapInfo = new NoiseMapInfo(width, height, widthOffset, heightOffset, noiseScale, octaves, lacunarity, persistence);
+        NoiseMapInfo mapInfo = new NoiseMapInfo(width, height, widthOffset, heightOffset, noiseScale, verticalScale, octaves, lacunarity, persistence);
 
         // Generate a flat plane
         meshFilter.sharedMesh = MeshGeneration.GeneratePlane(width, height);
-        meshCollider.sharedMesh = meshFilter.sharedMesh;
+        //meshCollider.sharedMesh = meshFilter.sharedMesh;
 
-        // Create the noise map (heightmap)
-        float[,] noiseMap = NoiseGeneration.Generate(mapInfo, noiseType);
-        meshRenderer.sharedMaterial.mainTexture = TextureGeneration.Generate(mapInfo, noiseMap);
+        if (renderMode == Utils.RenderMode.CPU)
+        {
+            // Create the noise map (heightmap)
+            float[,] noiseMap = NoiseGeneration.Generate(mapInfo, noiseType);
+            meshRenderer.sharedMaterial.mainTexture = TextureGeneration.Generate(mapInfo, noiseMap);
 
-        // Apply the noise map to the flat plane to produce a distorted mesh 
-        meshFilter.sharedMesh = MeshGeneration.ApplyHeightmap(meshFilter.sharedMesh, noiseMap, verticalScale);
-        meshCollider.sharedMesh = meshFilter.sharedMesh;
+            // Apply the noise map to the flat plane to produce a distorted mesh 
+            meshFilter.sharedMesh = MeshGeneration.ApplyHeightmap(meshFilter.sharedMesh, noiseMap, verticalScale);
+            //meshCollider.sharedMesh = meshFilter.sharedMesh;
+        }
     }
 
     

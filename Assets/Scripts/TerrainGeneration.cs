@@ -48,6 +48,7 @@ public class TerrainGeneration : MonoBehaviour
         // Put the properties in a noise map info object first as it modifies them in important ways
         NoiseMapInfo mapInfo = new NoiseMapInfo(width, height, widthOffset, heightOffset, noiseScale, verticalScale, octaves, lacunarity, persistence);
 
+        material.SetInteger("_NoiseType", ((int)noiseType));
         material.SetFloat("_WidthOffset", mapInfo.WidthOffset);
         material.SetFloat("_HeightOffset", mapInfo.HeightOffset);
         material.SetFloat("_NoiseScale", mapInfo.NoiseScale);
@@ -55,6 +56,15 @@ public class TerrainGeneration : MonoBehaviour
         material.SetFloat("_Octaves", mapInfo.Octaves);
         material.SetFloat("_Lacunarity", mapInfo.Lacunarity);
         material.SetFloat("_Persistence", mapInfo.Persistence);
+
+        if(renderMode == Utils.RenderMode.CPU)
+        {
+            material.SetInteger("_Enabled", 0);
+        }
+        else
+        {
+            material.SetInteger("_Enabled", 1);
+        }
     }
 
     void Generate()

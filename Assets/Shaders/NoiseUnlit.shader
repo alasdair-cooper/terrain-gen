@@ -70,7 +70,8 @@ Shader "Unlit/Noise"
 
                     if (_FalloffEnabled == 1) 
                     {
-                        falloffFactor = (length(float2(v.vertex.x % _Width, v.vertex.z % _Height) - float2(0.5 * _Width, 0.5 * _Height)) / (0.5 * _Width));
+                        falloffFactor = min(1, distance(float2(v.vertex.x % _Width, v.vertex.z % _Height), float2(0.5 * _Width, 0.5 * _Height)) / (0.5 * _Width));
+                        falloffFactor = -falloffFactor + 1;
                     }
 
                     float frequency = 1;
@@ -92,7 +93,7 @@ Shader "Unlit/Noise"
                         {
                             noiseSample = (SimplexNoise(float2(xValue, zValue)) * 2) - 1;
                         }
-                        noiseHeight += noiseSample * amplitude;
+                        noiseHeight += abs(noiseSample) * amplitude;
                         frequency *= _Lacunarity;
                         amplitude *= _Persistence;
                     }

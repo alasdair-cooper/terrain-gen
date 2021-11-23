@@ -39,14 +39,14 @@ Material:
     - _FalloffEnabled: 0
     - _Height: 10
     - _HeightOffset: 0
-    - _Lacunarity: 3
-    - _NoiseScale: 200
+    - _Lacunarity: 4.1
+    - _NoiseScale: 250
     - _NoiseType: 0
     - _Octaves: 5
     - _Persistence: 0.2
-    - _VerticalScale: 63.7
+    - _VerticalScale: 21.32
     - _Width: 10
-    - _WidthOffset: 0
+    - _WidthOffset: 2815
     - _WindQuality: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}

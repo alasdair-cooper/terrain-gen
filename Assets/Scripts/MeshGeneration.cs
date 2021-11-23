@@ -7,6 +7,7 @@ public class MeshGeneration
     static public Mesh GeneratePlane(int width, int height)
     {
         Mesh mesh = new Mesh();
+        mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 
         Vector3[] vertices = new Vector3[width * height];
         int[] triangles = new int[(width - 1) * (height - 1) * 6];
@@ -20,7 +21,8 @@ public class MeshGeneration
             for (int x = 0; x < width; x++)
             {
                 // Ensures the transform is at the center of the mesh instead of the corner
-                vertices[vertexIndex] = new Vector3(x - (0.5f * width), 0, z - (0.5f * height));
+                //vertices[vertexIndex] = new Vector3(x - (0.5f * width), 0, z - (0.5f * height));
+                vertices[vertexIndex] = new Vector3(x, 0, z);
 
                 // Creates triangle pairs for each vertex apart from those at the end of a row and/or column
                 // Triangles are the index of each vertex of the triangles corners

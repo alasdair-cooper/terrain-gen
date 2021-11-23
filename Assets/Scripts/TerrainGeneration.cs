@@ -7,6 +7,8 @@ public class TerrainGeneration : MonoBehaviour
 {
     public Utils.RenderMode renderMode;
     public Utils.NoiseType noiseType;
+
+    public bool generateFalloff = false;
     
     [Min(2)]
     public int width = 10;
@@ -43,12 +45,16 @@ public class TerrainGeneration : MonoBehaviour
         Generate();
 
         MeshRenderer meshRenderer = terrainObject.GetComponent<MeshRenderer>();
-        Material material = meshRenderer.material;
+        Material material = meshRenderer.sharedMaterial;
 
         // Put the properties in a noise map info object first as it modifies them in important ways
         NoiseMapInfo mapInfo = new NoiseMapInfo(width, height, widthOffset, heightOffset, noiseScale, verticalScale, octaves, lacunarity, persistence);
 
         material.SetInteger("_NoiseType", ((int)noiseType));
+        material.SetInteger("_Enabled", renderMode == Utils.RenderMode.GPU ? 1 : 0);
+        material.SetInteger("_FalloffEnabled", generateFalloff ? 1 : 0);
+        material.SetInteger("_Width", mapInfo.Width);
+        material.SetInteger("_Height", mapInfo.Height);
         material.SetFloat("_WidthOffset", mapInfo.WidthOffset);
         material.SetFloat("_HeightOffset", mapInfo.HeightOffset);
         material.SetFloat("_NoiseScale", mapInfo.NoiseScale);
@@ -56,15 +62,6 @@ public class TerrainGeneration : MonoBehaviour
         material.SetFloat("_Octaves", mapInfo.Octaves);
         material.SetFloat("_Lacunarity", mapInfo.Lacunarity);
         material.SetFloat("_Persistence", mapInfo.Persistence);
-
-        if(renderMode == Utils.RenderMode.CPU)
-        {
-            material.SetInteger("_Enabled", 0);
-        }
-        else
-        {
-            material.SetInteger("_Enabled", 1);
-        }
     }
 
     void Generate()
@@ -77,7 +74,7 @@ public class TerrainGeneration : MonoBehaviour
         NoiseMapInfo mapInfo = new NoiseMapInfo(width, height, widthOffset, heightOffset, noiseScale, verticalScale, octaves, lacunarity, persistence);
 
         // Generate a flat plane
-        meshFilter.sharedMesh = MeshGeneration.GeneratePlane(width, height);
+        meshFilter.sharedMesh = MeshGeneration.GeneratePlane(mapInfo.Width, mapInfo.Height);
         //meshCollider.sharedMesh = meshFilter.sharedMesh;
 
         if (renderMode == Utils.RenderMode.CPU)

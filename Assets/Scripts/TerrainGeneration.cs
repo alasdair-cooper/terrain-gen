@@ -23,7 +23,7 @@ public class TerrainGeneration : MonoBehaviour
     [Min(0.01f)]
     public float verticalScale = 1;
 
-    [Range(1, 5)]
+    [Min(1)]
     public int octaves = 5;
 
     [Range(0, 100)]
@@ -45,7 +45,7 @@ public class TerrainGeneration : MonoBehaviour
     {
         Generate();
 
-        UpdateShader();        
+        UpdateShader();
     }
 
     void Generate()

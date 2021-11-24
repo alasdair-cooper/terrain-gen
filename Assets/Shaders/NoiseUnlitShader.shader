@@ -50,11 +50,12 @@ Shader "Unlit/Noise"
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
+                float3 normal : NORMAL;
             };
 
             struct v2f
             {
-                float2 uv : TEXCOORD0;
+                half3 worldNormal : TEXCOORD0;
                 float4 vertex : SV_POSITION;
             };
 
@@ -100,15 +101,15 @@ Shader "Unlit/Noise"
                     v.vertex.y = noiseHeight * _VerticalScale * falloffFactor;
                 }
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                o.worldNormal = UnityObjectToWorldNormal(v.normal);
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
 
             fixed4 frag(v2f i) : SV_Target
             {
-                // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv);
+                fixed4 col = 0;
+                col.rgb = i.worldNormal * 0.5 + 0.5;
                 return col;
             }
             ENDCG

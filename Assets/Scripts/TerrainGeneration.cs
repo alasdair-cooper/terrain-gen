@@ -51,7 +51,6 @@ public class TerrainGeneration : MonoBehaviour
     void Generate()
     {
         MeshFilter meshFilter = terrainObject.GetComponent<MeshFilter>();
-        //MeshCollider meshCollider = terrainObject.GetComponent<MeshCollider>();
         MeshRenderer meshRenderer = terrainObject.GetComponent<MeshRenderer>();
 
         // Create an object to store all the info about the heightmap and the noise generation
@@ -59,7 +58,6 @@ public class TerrainGeneration : MonoBehaviour
 
         // Generate a flat plane
         meshFilter.sharedMesh = MeshGeneration.GeneratePlane(mapInfo.Width, mapInfo.Height);
-        //meshCollider.sharedMesh = meshFilter.sharedMesh;
 
         waterPlaneObject.GetComponent<MeshFilter>().sharedMesh = meshFilter.sharedMesh;
 
@@ -71,6 +69,7 @@ public class TerrainGeneration : MonoBehaviour
 
             // Apply the noise map to the flat plane to produce a distorted mesh 
             meshFilter.sharedMesh = MeshGeneration.ApplyHeightmap(meshFilter.sharedMesh, noiseMap, verticalScale);
+            meshFilter.sharedMesh.RecalculateNormals();
             //meshCollider.sharedMesh = meshFilter.sharedMesh;
         }
     }

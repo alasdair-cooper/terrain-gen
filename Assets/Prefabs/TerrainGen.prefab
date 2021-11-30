@@ -45,14 +45,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   renderMode: 1
-  noiseType: 0
-  width: 200
-  height: 200
+  noiseType: 1
+  generateFalloff: 1
+  width: 1000
+  height: 1000
   widthOffset: 0
   heightOffset: 0
-  noiseScale: 200
-  verticalScale: 25
-  octaves: 5
-  lacunarity: 3.85
-  persistence: 0.18
+  noiseScale: 250
+  verticalScale: 29.8
+  octaves: 10
+  lacunarity: 4.1
+  persistence: 0.2
   terrainObject: {fileID: 0}
+  waterPlaneObject: {fileID: 0}

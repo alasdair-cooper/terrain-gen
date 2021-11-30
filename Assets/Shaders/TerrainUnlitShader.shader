@@ -1,4 +1,4 @@
-Shader "Unlit/Noise"
+Shader "Unlit/Terrain"
 {
     Properties
     {
@@ -62,43 +62,48 @@ Shader "Unlit/Noise"
             sampler2D _MainTex;
             float4 _MainTex_ST;
 
+            float calculateNoiseHeight(int octaves, float x, float z)
+            {
+                float frequency = 1;
+                float amplitude = 1;
+                float noiseHeight = 0;
+
+                float falloffFactor = 1;
+
+                if (_FalloffEnabled == 1)
+                {
+                    falloffFactor = min(1, distance(float2(x % _Width, z % _Height), float2(0.5 * _Width, 0.5 * _Height)) / (0.5 * _Width));
+                    falloffFactor = -falloffFactor + 1;
+                }
+
+                for (int i = 0; i < _Octaves; i++)
+                {
+                    float xValue = ((x + _WidthOffset) / _NoiseScale) * frequency;
+                    float zValue = ((z + _HeightOffset) / _NoiseScale) * frequency;
+
+                    float noiseSample = 0;
+
+                    if (_NoiseType == 0)
+                    {
+                        noiseSample = (ClassicNoise(float2(xValue, zValue)) * 2) - 1;
+                    }
+                    else if (_NoiseType == 1)
+                    {
+                        noiseSample = (SimplexNoise(float2(xValue, zValue)) * 2) - 1;
+                    }
+                    noiseHeight += abs(noiseSample) * amplitude;
+                    frequency *= _Lacunarity;
+                    amplitude *= _Persistence;
+                }
+                return (noiseHeight * _VerticalScale * falloffFactor);
+            }
+
             v2f vert(appdata v)
             {
                 v2f o;
                 if(_Enabled == 1)
                 {
-                    float falloffFactor = 1;
-
-                    if (_FalloffEnabled == 1) 
-                    {
-                        falloffFactor = min(1, distance(float2(v.vertex.x % _Width, v.vertex.z % _Height), float2(0.5 * _Width, 0.5 * _Height)) / (0.5 * _Width));
-                        falloffFactor = -falloffFactor + 1;
-                    }
-
-                    float frequency = 1;
-                    float amplitude = 1;
-                    float noiseHeight = 0;
-
-                    for (int i = 0; i < _Octaves; i++)
-                    {
-                        float xValue = ((v.vertex.x + _WidthOffset) / _NoiseScale) * frequency;
-                        float zValue = ((v.vertex.z + _HeightOffset) / _NoiseScale) * frequency;
-
-                        float noiseSample = 0;
-
-                        if (_NoiseType == 0) 
-                        {
-                            noiseSample = (ClassicNoise(float2(xValue , zValue)) * 2) - 1;
-                        }
-                        else if (_NoiseType == 1) 
-                        {
-                            noiseSample = (SimplexNoise(float2(xValue, zValue)) * 2) - 1;
-                        }
-                        noiseHeight += abs(noiseSample) * amplitude;
-                        frequency *= _Lacunarity;
-                        amplitude *= _Persistence;
-                    }
-                    v.vertex.y = noiseHeight * _VerticalScale * falloffFactor;
+                    v.vertex.y = calculateNoiseHeight(_Octaves, v.vertex.x, v.vertex.z);
                 }
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.worldNormal = UnityObjectToWorldNormal(v.normal);

@@ -33,7 +33,7 @@ Shader "Custom/TerrainSurfaceShader"
         #include "Packages/jp.keijiro.noiseshader/Shader/SimplexNoise2D.hlsl"
 
         // Physically based Standard lighting model, and enable shadows on all light types
-        #pragma surface surf Standard fullforwardshadows vertex:vert
+        #pragma surface surf Standard fullforwardshadows vertex:vert addshadow
 
         // Use shader model 3.0 target, to get nicer looking lighting
         #pragma target 3.0
@@ -69,47 +69,72 @@ Shader "Custom/TerrainSurfaceShader"
             // put more per-instance properties here
         UNITY_INSTANCING_BUFFER_END(Props)
 
+        float calculateNoiseHeight(int octaves, float x, float z)
+        {
+            float frequency = 1;
+            float amplitude = 1;
+            float noiseHeight = 0;
+
+            float falloffFactor = 1;
+
+            if (_FalloffEnabled == 1)
+            {
+                falloffFactor = min(1, distance(float2(x % _Width, z % _Height), float2(0.5 * _Width, 0.5 * _Height)) / (0.5 * _Width));
+                falloffFactor = -falloffFactor + 1;
+            }
+
+            for (int i = 0; i < _Octaves; i++)
+            {
+                float xValue = ((x + _WidthOffset) / _NoiseScale) * frequency;
+                float zValue = ((z + _HeightOffset) / _NoiseScale) * frequency;
+
+                float noiseSample = 0;
+
+                if (_NoiseType == 0)
+                {
+                    noiseSample = (ClassicNoise(float2(xValue, zValue)) * 2) - 1;
+                }
+                else if (_NoiseType == 1)
+                {
+                    noiseSample = (SimplexNoise(float2(xValue, zValue)) * 2) - 1;
+                }
+                noiseHeight += abs(noiseSample) * amplitude;
+                frequency *= _Lacunarity;
+                amplitude *= _Persistence;
+            }
+            return (noiseHeight * _VerticalScale * falloffFactor);
+        }
+
         void vert(inout appdata_full v, out Input o) 
         {
             UNITY_INITIALIZE_OUTPUT(Input, o);
 
             if (_Enabled == 1)
             {
-                float falloffFactor = 1;
+                //float4 newPos = v.vertex + 0.01;
+                float4 newPos = v.vertex;
+                newPos.xyz += 1;
+                newPos.y = calculateNoiseHeight(_Octaves, v.vertex.x, v.vertex.z);
 
-                if (_FalloffEnabled == 1)
-                {
-                    falloffFactor = min(1, distance(float2(v.vertex.x % _Width, v.vertex.z % _Height), float2(0.5 * _Width, 0.5 * _Height)) / (0.5 * _Width));
-                    falloffFactor = -falloffFactor + 1;
-                }
+                float3 posPlusTangent = v.vertex + v.tangent * 0.01;
+                posPlusTangent.y = calculateNoiseHeight(_Octaves, posPlusTangent.x, posPlusTangent.z);
 
-                float frequency = 1;
-                float amplitude = 1;
-                float noiseHeight = 0;
+                float3 bitangent = cross(v.normal, v.tangent);
+                float3 posPlusBitangent = v.vertex + bitangent * 0.01;
+                posPlusBitangent.y = calculateNoiseHeight(_Octaves, posPlusBitangent.x, posPlusBitangent.z);
 
-                for (int i = 0; i < _Octaves; i++)
-                {
-                    float xValue = ((v.vertex.x + _WidthOffset) / _NoiseScale) * frequency;
-                    float zValue = ((v.vertex.z + _HeightOffset) / _NoiseScale) * frequency;
+                float3 modifiedTangent = posPlusTangent - newPos;
+                float3 modifiedBitangent = posPlusBitangent - newPos;
 
-                    float noiseSample = 0;
-
-                    if (_NoiseType == 0)
-                    {
-                        noiseSample = (ClassicNoise(float2(xValue, zValue)) * 2) - 1;
-                    }
-                    else if (_NoiseType == 1)
-                    {
-                        noiseSample = (SimplexNoise(float2(xValue, zValue)) * 2) - 1;
-                    }
-                    noiseHeight += abs(noiseSample) * amplitude;
-                    frequency *= _Lacunarity;
-                    amplitude *= _Persistence;
-                }
-                v.vertex.y = noiseHeight * _VerticalScale * falloffFactor;
+                float3 modifiedNormal = cross(modifiedTangent, modifiedBitangent);
+                //v.normal = normalize(modifiedNormal);
+                
+                v.vertex = newPos;
             }
             o.customColor = abs(v.normal);
         }
+
+        
 
         void surf (Input IN, inout SurfaceOutputStandard o)
         {

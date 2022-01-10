@@ -54,7 +54,7 @@ public class TerrainGeneration : MonoBehaviour
         MeshRenderer meshRenderer = terrainObject.GetComponent<MeshRenderer>();
 
         // Create an object to store all the info about the heightmap and the noise generation
-        NoiseMapInfo mapInfo = new NoiseMapInfo(width, height, widthOffset, heightOffset, noiseScale, verticalScale, octaves, lacunarity, persistence);
+        NoiseMapInfo mapInfo = new NoiseMapInfo(width, height, widthOffset, heightOffset, noiseScale, verticalScale, octaves, lacunarity, persistence, generateFalloff);
 
         // Generate a flat plane
         meshFilter.sharedMesh = MeshGeneration.GeneratePlane(mapInfo.Width, mapInfo.Height);
@@ -72,6 +72,12 @@ public class TerrainGeneration : MonoBehaviour
             meshFilter.sharedMesh.RecalculateNormals();
             //meshCollider.sharedMesh = meshFilter.sharedMesh;
         }
+
+        else if(renderMode == Utils.RenderMode.flat)
+        {
+            float[,] noiseMap = NoiseGeneration.Generate(mapInfo, noiseType);
+            meshRenderer.sharedMaterial.mainTexture = TextureGeneration.Generate(mapInfo, noiseMap);
+        }
     }
 
     void UpdateShader()
@@ -80,7 +86,7 @@ public class TerrainGeneration : MonoBehaviour
         Material material = meshRenderer.sharedMaterial;
 
         // Put the properties in a noise map info object first as it modifies them in important ways
-        NoiseMapInfo mapInfo = new NoiseMapInfo(width, height, widthOffset, heightOffset, noiseScale, verticalScale, octaves, lacunarity, persistence);
+        NoiseMapInfo mapInfo = new NoiseMapInfo(width, height, widthOffset, heightOffset, noiseScale, verticalScale, octaves, lacunarity, persistence, generateFalloff);
 
         material.SetInteger("_NoiseType", ((int)noiseType));
         material.SetInteger("_Enabled", renderMode == Utils.RenderMode.GPU ? 1 : 0);

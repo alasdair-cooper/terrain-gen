@@ -20,7 +20,9 @@ public class NoiseMapInfo
     public float Lacunarity { get; set; }
     public float Persistence { get; set; }
 
-    public NoiseMapInfo(int width, int height, float widthOffset, float heightOffset, float noiseScale, float verticalScale, int octaves, float lacunarity, float persistence)
+    public bool FalloffEnabled { get; set; }
+
+    public NoiseMapInfo(int width, int height, float widthOffset, float heightOffset, float noiseScale, float verticalScale, int octaves, float lacunarity, float persistence, bool falloffEnabled)
     {
         Width = width + 1;
         Height = height + 1;
@@ -35,5 +37,7 @@ public class NoiseMapInfo
 
         Lacunarity = lacunarity;
         Persistence = persistence;
+
+        FalloffEnabled = falloffEnabled;
     }
 }

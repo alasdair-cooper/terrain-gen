@@ -14,7 +14,8 @@ public class Utils
     public enum RenderMode
     {
         CPU,
-        GPU
+        GPU,
+        flat
     }
 }
 

@@ -36,6 +36,13 @@ public class NoiseGeneration
         {
             for (int x = 0; x < mapInfo.Width; x++)
             {
+                float falloffFactor = 1;
+                if (mapInfo.FalloffEnabled)
+                {
+                    falloffFactor = MathF.Min(1f, Vector2.Distance(new Vector2(x % mapInfo.Width, z % mapInfo.Height), new Vector2(0.5f * mapInfo.Width, 0.5f * mapInfo.Height)) / (0.5f * mapInfo.Width));
+                    falloffFactor = -falloffFactor + 1;
+                }
+
                 // Factors to modify the noise by
                 float frequency = 1;
                 float amplitude = 1;
@@ -56,7 +63,7 @@ public class NoiseGeneration
                     frequency *= mapInfo.Lacunarity;
                     amplitude *= mapInfo.Persistence;
                 }
-                noiseMap[x, z] = noiseHeight;
+                noiseMap[x, z] = noiseHeight * falloffFactor * mapInfo.VerticalScale;
 
                 if (noiseHeight > maxNoise)
                 {

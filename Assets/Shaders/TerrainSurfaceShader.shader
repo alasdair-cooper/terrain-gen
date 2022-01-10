@@ -28,6 +28,8 @@ Shader "Custom/TerrainSurfaceShader"
 
         CGPROGRAM
 
+        #include "UnityCG.cginc"
+
         // https://github.com/keijiro/NoiseShader/blob/8de41c5f3e1e088eb032811470d8af9ed6861f1c/LICENSE
         #include "Packages/jp.keijiro.noiseshader/Shader/ClassicNoise2D.hlsl"
         #include "Packages/jp.keijiro.noiseshader/Shader/SimplexNoise2D.hlsl"
@@ -75,14 +77,6 @@ Shader "Custom/TerrainSurfaceShader"
             float amplitude = 1;
             float noiseHeight = 0;
 
-            float falloffFactor = 1;
-
-            if (_FalloffEnabled == 1)
-            {
-                falloffFactor = min(1, distance(float2(x % _Width, z % _Height), float2(0.5 * _Width, 0.5 * _Height)) / (0.5 * _Width));
-                falloffFactor = -falloffFactor + 1;
-            }
-
             for (int i = 0; i < _Octaves; i++)
             {
                 float xValue = ((x + _WidthOffset) / _NoiseScale) * frequency;
@@ -102,7 +96,66 @@ Shader "Custom/TerrainSurfaceShader"
                 frequency *= _Lacunarity;
                 amplitude *= _Persistence;
             }
-            return (noiseHeight * _VerticalScale * falloffFactor);
+            return noiseHeight;
+        }
+
+        float calculateFalloff(float x, float z) 
+        {
+            float falloffFactor = 1;
+            if (_FalloffEnabled == 1)
+            {
+                falloffFactor = min(1, distance(float2(x % _Width, z % _Height), float2(0.5 * _Width, 0.5 * _Height)) / (0.5 * _Width));
+                falloffFactor = -falloffFactor + 1;
+            }
+            return falloffFactor;
+        }
+
+        float calculateNoiseHeightWithFalloffandScale(int octaves, float x, float z)
+        {
+            return calculateNoiseHeight(octaves, x, z) * _VerticalScale * calculateFalloff(x, z);
+        }
+
+        
+
+        float3 calculateNormalWithTangents(appdata_full v, float3 newPos)
+        {
+            float3 posPlusTangent = v.vertex + v.tangent * 0.01;
+            posPlusTangent.y = calculateNoiseHeight(_Octaves, posPlusTangent.x, posPlusTangent.z);
+
+            float3 bitangent = cross(v.normal, v.tangent);
+            float3 posPlusBitangent = v.vertex + bitangent * 0.01;
+            posPlusBitangent.y = calculateNoiseHeight(_Octaves, posPlusBitangent.x, posPlusBitangent.z);
+
+            float3 modifiedTangent = posPlusTangent - newPos;
+            float3 modifiedBitangent = posPlusBitangent - newPos;
+
+            float3 modifiedNormal = cross(modifiedTangent, modifiedBitangent);
+
+            return modifiedNormal;
+        }
+
+        float3 calculateNormalWithTangentsAverage(appdata_full v, float3 newPos)
+        {
+            float octaves = _Octaves;
+
+            float3 topNewPos = float3(newPos.x, calculateNoiseHeightWithFalloffandScale(octaves, newPos.x, newPos.z + 1), newPos.z + 1);
+            float3 topRightNewPos = float3(newPos.x + 1, calculateNoiseHeightWithFalloffandScale(octaves, newPos.x + 1, newPos.z + 1), newPos.z + 1);
+            float3 rightNewPos = float3(newPos.x + 1, calculateNoiseHeightWithFalloffandScale(octaves, newPos.x + 1, newPos.z), newPos.z);
+            float3 bottomNewPos = float3(newPos.x, calculateNoiseHeightWithFalloffandScale(octaves, newPos.x, newPos.z - 1), newPos.z - 1);
+            float3 bottomLeftNewPos = float3(newPos.x - 1, calculateNoiseHeightWithFalloffandScale(octaves, newPos.x - 1, newPos.z - 1), newPos.z - 1);
+            float3 leftNewPos = float3(newPos.x - 1, calculateNoiseHeightWithFalloffandScale(octaves, newPos.x - 1, newPos.z), newPos.z);
+
+            float3 topRightLeftNormal = cross(topNewPos - newPos, topRightNewPos - newPos);
+            float3 topRightRightNormal = cross(rightNewPos, topRightNewPos - newPos);
+            float3 topLeftNormal = cross(topNewPos - newPos, leftNewPos - newPos);
+            float3 bottomRightNormal = cross(bottomNewPos - newPos, rightNewPos - newPos);
+            float3 bottomLeftLeftNormal = cross(bottomLeftNewPos - newPos, leftNewPos - newPos);
+            float3 bottomLeftRightNormal = cross(bottomNewPos - newPos, bottomLeftNewPos - newPos);
+
+            float3 modifiedNormal = normalize((topRightLeftNormal + topRightRightNormal + topLeftNormal + bottomRightNormal + bottomLeftLeftNormal + bottomLeftRightNormal) / 6);
+
+            //return modifiedNormal;
+            return normalize(topLeftNormal);
         }
 
         void vert(inout appdata_full v, out Input o) 
@@ -113,28 +166,23 @@ Shader "Custom/TerrainSurfaceShader"
             {
                 //float4 newPos = v.vertex + 0.01;
                 float4 newPos = v.vertex;
+
                 newPos.xyz += 1;
-                newPos.y = calculateNoiseHeight(_Octaves, v.vertex.x, v.vertex.z);
 
-                float3 posPlusTangent = v.vertex + v.tangent * 0.01;
-                posPlusTangent.y = calculateNoiseHeight(_Octaves, posPlusTangent.x, posPlusTangent.z);
+                float noiseHeight = calculateNoiseHeight(_Octaves, v.vertex.x, v.vertex.z);
+                newPos.y = noiseHeight * _VerticalScale * calculateFalloff(v.vertex.x, v.vertex.z);
 
-                float3 bitangent = cross(v.normal, v.tangent);
-                float3 posPlusBitangent = v.vertex + bitangent * 0.01;
-                posPlusBitangent.y = calculateNoiseHeight(_Octaves, posPlusBitangent.x, posPlusBitangent.z);
+                float3 modifiedNormal = calculateNormalWithTangentsAverage(v, newPos);
 
-                float3 modifiedTangent = posPlusTangent - newPos;
-                float3 modifiedBitangent = posPlusBitangent - newPos;
-
-                float3 modifiedNormal = cross(modifiedTangent, modifiedBitangent);
-                //v.normal = normalize(modifiedNormal);
+                //TANGENT_SPACE_ROTATION;
+                //v.normal = mul(rotation, modifiedNormal);
+                v.normal = UnityObjectToWorldNormal(modifiedNormal);
                 
                 v.vertex = newPos;
+                //o.customColor = abs(noiseHeight / 1.25);
+                o.customColor = abs(v.normal) * 2;
             }
-            o.customColor = abs(v.normal);
         }
-
-        
 
         void surf (Input IN, inout SurfaceOutputStandard o)
         {

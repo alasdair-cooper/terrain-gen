@@ -71,7 +71,7 @@ Shader "Custom/TerrainSurfaceShader"
             // put more per-instance properties here
         UNITY_INSTANCING_BUFFER_END(Props)
 
-        float calculateNoiseHeight(int octaves, float x, float z)
+        float calculateNoiseHeight(int octaves, float x, float z, float lacunarity, float persistence)
         {
             float frequency = 1;
             float amplitude = 1;
@@ -93,8 +93,8 @@ Shader "Custom/TerrainSurfaceShader"
                     noiseSample = (SimplexNoise(float2(xValue, zValue)) * 2) - 1;
                 }
                 noiseHeight += abs(noiseSample) * amplitude;
-                frequency *= _Lacunarity;
-                amplitude *= _Persistence;
+                frequency *= lacunarity;
+                amplitude *= persistence;
             }
             return noiseHeight;
         }
@@ -112,7 +112,7 @@ Shader "Custom/TerrainSurfaceShader"
 
         float calculateNoiseHeightWithFalloffandScale(int octaves, float x, float z)
         {
-            return calculateNoiseHeight(octaves, x, z) * _VerticalScale * calculateFalloff(x, z);
+            return calculateNoiseHeight(octaves, x, z, _Lacunarity, _Persistence) * _VerticalScale * calculateFalloff(x, z);
         }
 
         
@@ -120,11 +120,11 @@ Shader "Custom/TerrainSurfaceShader"
         float3 calculateNormalWithTangents(appdata_full v, float3 newPos)
         {
             float3 posPlusTangent = v.vertex + v.tangent * 0.01;
-            posPlusTangent.y = calculateNoiseHeight(_Octaves, posPlusTangent.x, posPlusTangent.z);
+            posPlusTangent.y = calculateNoiseHeight(_Octaves, posPlusTangent.x, posPlusTangent.z, _Lacunarity, _Persistence);
 
             float3 bitangent = cross(v.normal, v.tangent);
             float3 posPlusBitangent = v.vertex + bitangent * 0.01;
-            posPlusBitangent.y = calculateNoiseHeight(_Octaves, posPlusBitangent.x, posPlusBitangent.z);
+            posPlusBitangent.y = calculateNoiseHeight(_Octaves, posPlusBitangent.x, posPlusBitangent.z, _Lacunarity, _Persistence);
 
             float3 modifiedTangent = posPlusTangent - newPos;
             float3 modifiedBitangent = posPlusBitangent - newPos;
@@ -169,8 +169,13 @@ Shader "Custom/TerrainSurfaceShader"
 
                 newPos.xyz += 1;
 
-                float noiseHeight = calculateNoiseHeight(_Octaves, v.vertex.x, v.vertex.z);
+                float noiseHeight = calculateNoiseHeight(_Octaves, v.vertex.x, v.vertex.z, _Lacunarity, _Persistence);
                 newPos.y = noiseHeight * _VerticalScale * calculateFalloff(v.vertex.x, v.vertex.z);
+
+                float dx = calculateNoiseHeight(_Octaves, v.vertex.x + 1, v.vertex.z, _Lacunarity, _Persistence) - noiseHeight;
+                float dz = calculateNoiseHeight(_Octaves, v.vertex.x, v.vertex.z + 1, _Lacunarity, _Persistence) - noiseHeight;
+
+                float gradient = sqrt(dx * dx + dz * dz);
 
                 float3 modifiedNormal = calculateNormalWithTangentsAverage(v, newPos);
 
@@ -178,9 +183,25 @@ Shader "Custom/TerrainSurfaceShader"
                 //v.normal = mul(rotation, modifiedNormal);
                 v.normal = UnityObjectToWorldNormal(modifiedNormal);
                 
-                v.vertex = newPos;
                 //o.customColor = abs(noiseHeight / 1.25);
                 o.customColor = abs(v.normal) * 2;
+                float value = (o.customColor.x + o.customColor.y + o.customColor.z) / 3;
+                if (gradient > 0.03) {
+                    o.customColor.x = 1;
+                    o.customColor.y = 1;
+                    o.customColor.z = 1;
+
+                    noiseHeight = calculateNoiseHeight(_Octaves, v.vertex.x, v.vertex.z, _Lacunarity * 2, _Persistence * 1.5);
+                    newPos.y = noiseHeight * _VerticalScale * calculateFalloff(v.vertex.x, v.vertex.z);
+                }
+                else {
+                    o.customColor.x = 0.2;
+                    o.customColor.y = 1.6;
+                    o.customColor.z = 0.6;
+                }
+
+                v.vertex = newPos;
+
             }
         }
 

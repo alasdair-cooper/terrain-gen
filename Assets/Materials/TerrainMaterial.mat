@@ -40,15 +40,15 @@ Material:
     - _Glossiness: 0
     - _Height: 10
     - _HeightOffset: 0
-    - _Lacunarity: 17.84
+    - _Lacunarity: 6
     - _Metallic: 0
-    - _NoiseScale: 22.7
+    - _NoiseScale: 102
     - _NoiseType: 0
-    - _Octaves: 5
-    - _Persistence: 0.104
-    - _VerticalScale: 7.8
+    - _Octaves: 8
+    - _Persistence: 0.069
+    - _VerticalScale: 23.86
     - _Width: 10
-    - _WidthOffset: -1226
+    - _WidthOffset: 0
     - _WindQuality: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
